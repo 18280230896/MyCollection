@@ -226,6 +226,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 移除list中的指定元素
+     *
      * @param o
      * @return
      */
@@ -244,6 +245,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 删除并返回指定索引的元素
+     *
      * @param index
      * @return
      */
@@ -267,6 +269,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 删除指定集合中的元素，如果成功删除了一个元素则返回true，否则返回false
+     *
      * @param c
      * @return
      */
@@ -283,6 +286,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 删除满足条件的元素
+     *
      * @param filter
      * @return
      */
@@ -305,6 +309,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 通过索引获取元素
+     *
      * @param index
      * @return
      */
@@ -316,6 +321,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 设置指定索引的元素，并返回之前的元素
+     *
      * @param index
      * @param element
      * @return
@@ -330,6 +336,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 返回指定元素在列表中第一次出现的索引，如果不存在则返回-1
+     *
      * @param o
      * @return
      */
@@ -348,6 +355,7 @@ public class MyArrayList<E> extends AbstractList<E> {
 
     /**
      * 返回指定元素在列表中最后一次出现的索引，如果不存在返回-1
+     *
      * @param o
      * @return
      */
@@ -364,7 +372,12 @@ public class MyArrayList<E> extends AbstractList<E> {
         return index;
     }
 
-    //判断list中是否包含对象
+    /**
+     * 判断list中是否包含对象
+     *
+     * @param o
+     * @return
+     */
     @Override
     public boolean contains(Object o) {
         for (Object o1 : elements) {
@@ -376,7 +389,12 @@ public class MyArrayList<E> extends AbstractList<E> {
     }
 
 
-    //判断list中是否包含指定集合的所有元素
+    /**
+     * 判断list中是否包含指定集合的所有元素
+     *
+     * @param c
+     * @return
+     */
     @Override
     public boolean containsAll(Collection<?> c) {
         //遍历集合
@@ -447,23 +465,40 @@ public class MyArrayList<E> extends AbstractList<E> {
     }
 
 
-    //返回一个迭代器
+    /**
+     * 返回此集合的迭代器对象
+     *
+     * @return
+     */
     @Override
     public Iterator<E> iterator() {
         return new MyIterator<>();
     }
 
+
+    /**
+     * 返回此对象的listIterator对象
+     *
+     * @return
+     */
+    @Override
+    public ListIterator<E> listIterator() {
+        return new MyListIterator();
+    }
+
     /**
      * 自定义一个迭代器，继承Iterator
      *
-     * @param <T>
+     * @param <E>
      */
-    private class MyIterator<T> implements Iterator<T> {
+    private class MyIterator<E> implements Iterator<E> {
 
         //当前指针指向位置
         int cursor;
         //使用迭代器修改集合的次数
         int iterModifyCount;
+        //是否可以执行remove操作
+        boolean isRemove = false;
 
         public MyIterator() {
             iterModifyCount = modifyCount;
@@ -480,10 +515,11 @@ public class MyArrayList<E> extends AbstractList<E> {
          * @return
          */
         @Override
-        public T next() {
+        public E next() {
             //如果在使用迭代器过程中使用了非迭代器的remove方法修改了集合结构则抛出此异常
             if (iterModifyCount != modifyCount) throw new ConcurrentModificationException();
-            return (T) elements[cursor++];
+            isRemove = true;
+            return (E) elements[cursor++];
         }
 
         /**
@@ -491,15 +527,163 @@ public class MyArrayList<E> extends AbstractList<E> {
          */
         @Override
         public void remove() {
-            if (cursor == 0) throw new IllegalStateException("在调用remove()方法前必须调用next()方法");
+            if (!isRemove) throw new IllegalStateException("在调用remove()方法前必须调用next()方法");
             //调用集合的remove方法删除指定索引的元素
             MyArrayList.this.remove(--cursor);
             iterModifyCount++;
+            isRemove = false;
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super T> action) {
+        public void forEachRemaining(Consumer<? super E> action) {
             throw new NullPointerException();
+        }
+    }
+
+
+    /**
+     * 自定义一个listIterator类
+     *
+     */
+    private class MyListIterator implements ListIterator<E> {
+        //指针指向位置
+        int cursor;
+        //用迭代器操作集合的次数
+        int iterModifyCount;
+        //定义一个变量记录下一次调用remove方法删除那个元素,0表示不能删除，1表示删除指针前一个，2表示删除指针后一个
+        int removeElement = 0;
+        //定义一个变量记录下一次调用add方法时将元素插入的位置，true表示插入指针前，false表示插入指针后
+        boolean insertPrev = true;
+        //定义一个变量表示下一次调用set方法时修改那个元素，0表示不能修改，1表示修改指针前一个，2表示修改指针后一个
+        int setElement = 0;
+
+        public MyListIterator() {
+            modifyCount = iterModifyCount;
+        }
+
+        /**
+         * 是否还有下一个元素
+         *
+         * @return
+         */
+        @Override
+        public boolean hasNext() {
+            return cursor < size;
+        }
+
+        /**
+         * 将指针指向下一个元素并返回当前指向的元素
+         *
+         * @return
+         */
+        @Override
+        public E next() {
+            //如果在使用迭代器过程中使用了非迭代器的remove方法修改了集合结构则抛出此异常
+            if (iterModifyCount != modifyCount) throw new ConcurrentModificationException();
+            //设置可删除和修改指针指向的上一个元素
+            removeElement = 1;
+            setElement = 1;
+            //设置下一次调用add方法将元素插入指针指向的前一个元素位置
+            insertPrev = true;
+            return (E) elements[cursor++];
+        }
+
+        /**
+         * 返回是否有上一个元素
+         *
+         * @return
+         */
+        @Override
+        public boolean hasPrevious() {
+            return cursor > 0;
+        }
+
+        /**
+         * 将指针指向前一个元素并返回当前指向的元素
+         *
+         * @return
+         */
+        @Override
+        public E previous() {
+            //如果在使用迭代器过程中使用了非迭代器的方法修改了集合结构则抛出此异常
+            if (iterModifyCount != modifyCount) throw new ConcurrentModificationException();
+            //设置可删除和修改指针指向的下一个元素
+            removeElement = 2;
+            setElement = 2;
+            //设置下一次调用add方法将元素插入指针指向的后一个元素位置
+            insertPrev = false;
+            return (E) elements[--cursor];
+        }
+
+        /**
+         * 返回下一个next()方法返回元素的索引
+         *
+         * @return
+         */
+        @Override
+        public int nextIndex() {
+            return cursor;
+        }
+
+        /**
+         * 返回下一个previous方法所返回的元素的索引
+         *
+         * @return
+         */
+        @Override
+        public int previousIndex() {
+            return cursor;
+        }
+
+        /**
+         *
+         */
+        @Override
+        public void remove() {
+            if(removeElement == 0)  throw new IllegalStateException("在调用remove()方法前必须调用next()或者previous()方法");
+            else if(removeElement == 1){
+                //删除指针指向的上一个元素
+                MyArrayList.this.remove(--cursor);
+            }else{
+                //删除后一个元素
+                MyArrayList.this.remove(cursor+1);
+            }
+            //操作次数+1
+            iterModifyCount++;
+            //设置removeElement = 0,如果连续调用remove将抛出异常
+            removeElement = 0;
+        }
+
+        /**
+         * 修改上一次调用next或者previous方法所返回的元素
+         * @param e
+         */
+        @Override
+        public void set(E e) {
+            if(setElement == 0)  throw new IllegalStateException("在调用set()方法前必须调用next()或者previous()方法");
+            else if(setElement == 1){
+                //在没有调用remove方法的前提下才能执行修改操作
+                if(removeElement != 1) throw new IllegalStateException("该元素已经被删除了");
+                //修改元素的值
+                elements[cursor - 1] = e;
+            }else{
+                //在没有调用remove方法的前提下才能执行修改操作
+                if(removeElement != 2) throw new IllegalStateException("该元素已经被删除了");
+                //修改元素的值
+                elements[cursor] = e;
+            }
+        }
+
+        /**
+         * 在上一次调用next返回的元素后面插入一个元素或者在上一次调用previous返回元素的前面插入一个元素
+         * @param e
+         */
+        @Override
+        public void add(E e) {
+            if(insertPrev) MyArrayList.this.add(cursor++,e);
+            else MyArrayList.this.add(cursor+1,e);
+            //操作次数+1
+            iterModifyCount++;
         }
     }
 }

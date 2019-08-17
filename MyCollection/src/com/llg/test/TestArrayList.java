@@ -251,4 +251,52 @@ public class TestArrayList {
             System.out.println(iterator.next());
         }
     }
+
+    /**
+     * 测试ListIterator<E> listIterator()
+     * 返回此集合的列表迭代器对象
+     */
+    @Test
+    public void testItr1() {
+        ListIterator<String> iterator = list.listIterator();
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+        }
+        System.out.println("--------");
+        while (iterator.hasPrevious()) {
+            System.out.println(iterator.previous());
+        }
+    }
+
+    /**
+     * 测试ListIterator<E> listIterator()
+     * 返回此集合的列表迭代器对象
+     */
+    @Test
+    public void testItr2() {
+        ListIterator<String> iterator = list.listIterator();
+        iterator.add("add1");
+        iterator.next();
+        iterator.next();
+        iterator.add("add2");
+        System.out.println(list);
+        iterator.previous();
+        iterator.add("add3");
+        System.out.println(list);
+
+    }
+
+    /**
+     * 测试ListIterator<E> listIterator()
+     * 返回此集合的列表迭代器对象
+     */
+    @Test
+    public void testItr3() {
+        ListIterator<String> it = list.listIterator();
+        System.out.println(it.next());
+        System.out.println(it.next());
+        System.out.println(it.previous());
+        it.set("set");
+        System.out.println(list);
+    }
 }
