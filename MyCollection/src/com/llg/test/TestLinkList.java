@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class TestLinkList {
@@ -117,5 +118,25 @@ public class TestLinkList {
         System.out.println(list.indexOf("str"));
         System.out.println(list.indexOf("str3"));
         System.out.println(list.lastIndexOf("str3"));
+    }
+
+    @Test
+    public void testIter(){
+        System.out.println(list);
+        Iterator<String> it = list.iterator();
+        while (it.hasNext()) {
+            System.out.println(it.next());
+        }
+        System.out.println(list);
+    }
+
+    @Test
+    public void testIter2(){
+        System.out.println(list);
+        Iterator<String> it = list.iterator();
+        System.out.println(it.next());
+        System.out.println(it.next());
+        it.remove();
+        System.out.println(list);
     }
 }

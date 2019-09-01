@@ -1,9 +1,6 @@
 package com.llg.collection;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class MyLinkedList<E> extends AbstractList<E> {
@@ -14,6 +11,8 @@ public class MyLinkedList<E> extends AbstractList<E> {
     private Node lastNode;
     //list大小
     private int size;
+    //list的操作次数
+    int modCount;
 
     public MyLinkedList() {
         head = new Node();
@@ -37,6 +36,8 @@ public class MyLinkedList<E> extends AbstractList<E> {
         lastNode = node;
         //元素个数+1
         size++;
+        //list操作次数+1
+        modCount++;
         return true;
     }
 
@@ -59,7 +60,8 @@ public class MyLinkedList<E> extends AbstractList<E> {
         insert(head, node);
         //将nextNode插入到entry后
         insert(node, nextNode);
-
+        //操作次数+1
+        modCount++;
         size++;
     }
 
@@ -93,6 +95,7 @@ public class MyLinkedList<E> extends AbstractList<E> {
         //将node插入到entry后面
         insert(entry, node);
         size++;
+        modCount++;
     }
 
 
@@ -236,6 +239,7 @@ public class MyLinkedList<E> extends AbstractList<E> {
         //获取指定索引的节点
         Node node = getNode(index);
         size--;
+        modCount++;
         if(node == lastNode){
             lastNode = lastNode.prev;
             lastNode.next = null;
@@ -262,6 +266,7 @@ public class MyLinkedList<E> extends AbstractList<E> {
         }else {
             insert(node.prev,node.next);
             size--;
+            modCount++;
         }
         return true;
     }
@@ -347,6 +352,15 @@ public class MyLinkedList<E> extends AbstractList<E> {
         lastNode = head;
     }
 
+    /**
+     * 返回该list的一个迭代器
+     * @return
+     */
+    @Override
+    public Iterator<E> iterator() {
+        return new MyIterator();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("[");
@@ -375,6 +389,43 @@ public class MyLinkedList<E> extends AbstractList<E> {
 
         public Node(E data) {
             this.data = data;
+        }
+    }
+
+    class MyIterator implements Iterator<E>{
+
+        //当前指针指向位置
+        Node cursor = head;
+        //记录list的操作次数
+        int iterModCount;
+        //是否可以调用remove操作
+        boolean isRemove;
+
+        public MyIterator() {
+            iterModCount = modCount;
+            isRemove = false;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cursor != lastNode;
+        }
+
+        @Override
+        public E next() {
+            if(iterModCount != modCount) throw new ConcurrentModificationException();
+            isRemove = true;
+            cursor = cursor.next;
+            return cursor.data;
+        }
+
+        @Override
+        public void remove() {
+            if(!isRemove) throw new IllegalStateException("在调用remove()方法前必须调用next()方法");
+            isRemove = false;
+            insert(cursor.prev,cursor.next);
+            cursor = cursor.next;
+            size--;
         }
     }
 }
